@@ -5,17 +5,35 @@ import { getAuth } from "firebase-admin/auth";
 
 let adminApp: App;
 
+function cleanEnvVar(val: string | undefined): string | undefined {
+  if (!val) return val;
+  let cleaned = val.trim();
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  return cleaned;
+}
+
 function getAdminApp() {
   if (getApps().length > 0) {
     adminApp = getApps()[0];
   } else {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+    const projectId = cleanEnvVar(process.env.FIREBASE_PROJECT_ID);
+    const clientEmail = cleanEnvVar(process.env.FIREBASE_CLIENT_EMAIL);
+    let privateKey = cleanEnvVar(process.env.FIREBASE_PRIVATE_KEY);
+    
+    if (privateKey) {
+      privateKey = privateKey.replace(/\\n/g, "\n");
+    }
 
     adminApp = initializeApp({
       credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
   }
