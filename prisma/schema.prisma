@@ -1,0 +1,50 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("EMPLOYEE") // "ADMIN" or "EMPLOYEE"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  clients      Client[]
+  interactions Interaction[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String?
+  phone     String?
+  email     String?
+  status    String   @default("NUEVO") // "NUEVO", "INTERESADO", "BUSCANDO DINERO", "DEPOSITO", "SEGUIMIENTO", "POSITIVOS"
+  extraData String?  // JSON stringified extra columns
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+
+  interactions Interaction[]
+}
+
+model Interaction {
+  id        String   @id @default(cuid())
+  notes     String
+  type      String   @default("COMMENT") // "COMMENT" or "STATUS_CHANGE"
+  createdAt DateTime @default(now())
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
