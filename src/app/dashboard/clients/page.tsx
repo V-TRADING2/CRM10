@@ -16,20 +16,26 @@ export default async function ClientsPage() {
   } else {
     clientsSnap = await adminDb.collection("clients")
       .where("assignedToId", "==", session.user.id)
-      .orderBy("createdAt", "desc")
       .get()
+  }
+
+  let docs = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }))
+  if (session.user.role !== 'ADMIN') {
+    docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
   }
 
   // Para cada cliente obtenemos sus interacciones
   const clients = await Promise.all(
-    clientsSnap.docs.map(async doc => {
-      const client = { id: doc.id, ...doc.data() as any }
+    docs.map(async client => {
       const interactionsSnap = await adminDb.collection("interactions")
-        .where("clientId", "==", doc.id)
-        .orderBy("createdAt", "desc")
-        .limit(10)
+        .where("clientId", "==", client.id)
         .get()
-      client.interactions = interactionsSnap.docs.map(i => ({ id: i.id, ...i.data() }))
+
+      client.interactions = interactionsSnap.docs
+        .map(i => ({ id: i.id, ...i.data() as any }))
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, 10)
+
       return client
     })
   )

@@ -10,10 +10,11 @@ export default async function EmployeesPage() {
 
   const employeesSnap = await adminDb.collection("users")
     .where("role", "==", "EMPLOYEE")
-    .orderBy("createdAt", "desc")
     .get()
 
-  const employees = employeesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }))
+  const employees = employeesSnap.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
