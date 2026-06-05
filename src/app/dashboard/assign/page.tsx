@@ -2,6 +2,7 @@ import { adminDb } from "@/lib/firebase-admin"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import AssignForm from "./AssignForm"
+import IndividualAssignForm from "./IndividualAssignForm"
 
 export default async function AssignPage() {
   const session = await auth()
@@ -9,9 +10,17 @@ export default async function AssignPage() {
 
   const unassignedSnap = await adminDb.collection("clients")
     .where("assignedToId", "==", null)
-    .count()
     .get()
-  const unassignedCount = unassignedSnap.data().count
+
+  const unassignedCount = unassignedSnap.docs.length
+
+  // Obtener los clientes sin asignar (máx 500 para la asignación individual)
+  const unassignedClients = unassignedSnap.docs.slice(0, 500).map(doc => ({
+    id: doc.id,
+    name: (doc.data() as any).name || '',
+    phone: (doc.data() as any).phone || '',
+    email: (doc.data() as any).email || '',
+  }))
 
   const employeesSnap = await adminDb.collection("users")
     .where("role", "==", "EMPLOYEE")
@@ -35,7 +44,7 @@ export default async function AssignPage() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Asignación de Clientes</h2>
-        <p className="text-slate-500">Reparte masivamente los clientes sin asignar entre tus empleados.</p>
+        <p className="text-slate-500">Reparte los clientes entre tus empleados de forma masiva o individual.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -46,7 +55,7 @@ export default async function AssignPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Asignación Masiva</h3>
+          <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Asignación Masiva (por cantidad)</h3>
           {unassignedCount > 0 ? (
             <AssignForm employees={employees} maxClients={unassignedCount} />
           ) : (
@@ -57,6 +66,16 @@ export default async function AssignPage() {
         </div>
       </div>
 
+      {/* Asignación individual */}
+      {unassignedCount > 0 && (
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+          <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">Asignación Individual (por nombre)</h3>
+          <p className="text-sm text-slate-500 mb-5">Selecciona clientes específicos y asígnalos al empleado de tu elección.</p>
+          <IndividualAssignForm clients={unassignedClients} employees={employees} />
+        </div>
+      )}
+
+      {/* Tabla de carga de trabajo */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Carga de Trabajo Actual</h3>

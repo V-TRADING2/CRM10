@@ -1,14 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { uploadExcel } from "./actions"
-import { Upload as UploadIcon, CheckCircle2, AlertCircle } from "lucide-react"
+import { uploadExcel, deleteAllClients } from "./actions"
+import { Upload as UploadIcon, CheckCircle2, AlertCircle, Trash2, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [result, setResult] = useState<{ success: boolean; count?: number; error?: string } | null>(null)
+  const [deleteResult, setDeleteResult] = useState<{ success: boolean; deleted?: number; error?: string } | null>(null)
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,6 +29,20 @@ export default function UploadPage() {
       setResult({ success: false, error: error.message })
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    setIsDeleting(true)
+    setDeleteResult(null)
+    try {
+      const res = await deleteAllClients()
+      setDeleteResult(res)
+      setShowDeleteConfirm(false)
+    } catch (error: any) {
+      setDeleteResult({ success: false, error: error.message })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -93,6 +110,70 @@ export default function UploadPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Sección para eliminar toda la base de clientes */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-red-200 dark:border-red-900/50">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center flex-shrink-0">
+            <Trash2 size={24} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Eliminar Base de Clientes</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              Elimina toda la base de datos de clientes y su historial de interacciones. Esta acción es irreversible.
+            </p>
+
+            {deleteResult?.success && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg border border-green-100 dark:border-green-800 mb-4">
+                <CheckCircle2 size={18} />
+                <span className="text-sm font-medium">Se eliminaron {deleteResult.deleted} clientes exitosamente.</span>
+              </div>
+            )}
+
+            {deleteResult?.error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg border border-red-100 mb-4">
+                <AlertCircle size={18} />
+                <span className="text-sm">{deleteResult.error}</span>
+              </div>
+            )}
+
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-all shadow-sm hover:shadow-md"
+              >
+                Eliminar Toda la Base
+              </button>
+            ) : (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 space-y-3">
+                <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                  <AlertTriangle size={20} />
+                  <span className="font-bold text-sm">¿Estás seguro? Esta acción NO se puede deshacer.</span>
+                </div>
+                <p className="text-xs text-red-600 dark:text-red-500">
+                  Se eliminarán TODOS los clientes, sus asignaciones y todo su historial de interacciones permanentemente.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteAll}
+                    disabled={isDeleting}
+                    className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm transition-all"
+                  >
+                    {isDeleting ? 'Eliminando...' : 'Sí, Eliminar Todo'}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="px-5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

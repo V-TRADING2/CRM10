@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Users, Upload, LayoutDashboard, LogOut, UserCheck } from "lucide-react"
+import { Users, Upload, LayoutDashboard, LogOut, UserCheck, Eye } from "lucide-react"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -34,6 +34,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 <Link href="/dashboard/assign" className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-800 hover:text-white transition-all">
                   <UserCheck size={20} />
                   <span className="font-medium">Asignar Clientes</span>
+                </Link>
+                <Link href="/dashboard/tracking" className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-800 hover:text-white transition-all">
+                  <Eye size={20} />
+                  <span className="font-medium">Seguimiento</span>
                 </Link>
                 <Link href="/dashboard/clients" className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-800 hover:text-white transition-all">
                   <Users size={20} />

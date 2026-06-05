@@ -69,12 +69,32 @@ export default function ClientInteraction({ client }: { client: any }) {
         <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <Phone size={16} className="text-slate-400" />
-            <span className="truncate">{client.phone || 'Sin Teléfono'}</span>
+            <span className="truncate font-medium">{client.phone || 'Sin Teléfono'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Mail size={16} className="text-slate-400" />
             <span className="truncate">{client.email || 'Sin Correo'}</span>
           </div>
+
+          {/* Mostrar datos extras dinámicos del Excel */}
+          {extraData && Object.keys(extraData).length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg text-xs">
+              <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">Información Adicional</p>
+              {Object.entries(extraData).map(([key, value]) => {
+                const lowerKey = key.toLowerCase().trim();
+                // Omitir campos que ya se muestran arriba de manera destacada
+                if (['nombre', 'name', 'cliente', 'contacto', 'telefono', 'teléfono', 'tel', 'phone', 'celular', 'correo', 'email', 'e-mail', 'mail', 'status', 'assignedtoid', 'createdat', 'updatedat', 'id'].includes(lowerKey)) {
+                  return null;
+                }
+                return (
+                  <div key={key} className="flex justify-between gap-2 py-0.5">
+                    <span className="text-slate-500 font-medium truncate max-w-[120px]">{key}:</span>
+                    <span className="text-slate-800 dark:text-slate-200 font-semibold truncate text-right">{String(value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -94,7 +114,7 @@ export default function ClientInteraction({ client }: { client: any }) {
             {client.interactions.map((int: any) => (
               <div key={int.id} className="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs shadow-sm">
                 <div className="flex justify-between items-center mb-1 text-slate-500">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">{int.user.name}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{int.userName || int.user?.name || "Usuario"}</span>
                   <span>{new Date(int.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className={`text-slate-600 dark:text-slate-400 ${int.type === 'STATUS_CHANGE' ? 'italic text-blue-600 dark:text-blue-400 font-medium' : ''}`}>

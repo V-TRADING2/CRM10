@@ -1,7 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import ClientInteraction from "./ClientInteraction"
+import ClientsList from "./ClientsList"
 
 export default async function ClientsPage() {
   const session = await auth()
@@ -9,11 +9,13 @@ export default async function ClientsPage() {
 
   let clientsSnap
   if (session.user.role === 'ADMIN') {
+    // Para administradores, traemos todos los clientes sin límites restrictivos o limitados a 1000
     clientsSnap = await adminDb.collection("clients")
       .orderBy("createdAt", "desc")
-      .limit(200)
+      .limit(1000)
       .get()
   } else {
+    // Para empleados, traemos todos sus clientes asignados
     clientsSnap = await adminDb.collection("clients")
       .where("assignedToId", "==", session.user.id)
       .get()
@@ -48,21 +50,11 @@ export default async function ClientsPage() {
         </h2>
         <p className="text-slate-500">
           Visualiza los detalles, agrega comentarios al historial y cambia la tipificación.
-          {session.user.role === 'ADMIN' && <span className="ml-1 text-xs text-amber-600">(Vista de administrador – mostrando los últimos 200)</span>}
+          {session.user.role === 'ADMIN' && <span className="ml-1 text-xs text-amber-600">(Vista de administrador – mostrando los últimos 1,000)</span>}
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {clients.length === 0 && (
-          <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-500 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No tienes clientes</h3>
-            <p>Aún no se te han asignado clientes para gestionar.</p>
-          </div>
-        )}
-        {clients.map(client => (
-          <ClientInteraction key={client.id} client={client} />
-        ))}
-      </div>
+      <ClientsList initialClients={clients} />
     </div>
   )
 }
